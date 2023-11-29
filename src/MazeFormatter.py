@@ -2,8 +2,10 @@ import cv2
 import os
 import numpy as np
 
-img_path = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
-
+IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
+N = 33
+M = 15
+THRESHOLD = 90
 
 class MazeFormatter:
     def __init__(self, img_path, N=33, m=15, threshold=90):
@@ -40,6 +42,6 @@ class MazeFormatter:
 
 
 if __name__ == "__main__":
-    rm = MazeFormatter(img_path)
+    rm = MazeFormatter(IMG_PATH, N, M, THRESHOLD)
     print(rm.convert())
     rm.show()

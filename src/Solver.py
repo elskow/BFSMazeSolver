@@ -2,13 +2,15 @@ import numpy as np
 import os
 import time
 import cv2
+import MazeFormatter
 
 
-MAZE_PATH = os.path.join(os.path.dirname(__file__), "../example/maze.txt")
+IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
 DIRECTIONS = [1, 2, 3, 4]
-# START_POINT = (1, 1)
-# END_POINT = (15, 15)
 SLEEP_TIME = 0.01
+N = 33
+M = 15
+THRESHOLD = 100
 
 
 class Point:
@@ -52,8 +54,7 @@ class Maze:
     """Represents the maze."""
 
     def __init__(self, maze_str):
-        maze_list = [[int(i) for i in x.strip().split(" ")] for x in maze_str]
-        self.maze = np.array(maze_list)
+        self.maze = np.array([list(map(int, x.strip().split(" "))) for x in maze_str.split("\n") if x])
         self.height, self.width = self.shape = self.maze.shape
 
     def get_val(self, x, y):
@@ -66,7 +67,8 @@ class Maze:
 class Solution:
     """Finds a solution to the maze."""
 
-    def __init__(self, maze_str, start=None, end=None):
+    def __init__(self, img_path, start=None, end=None):
+        maze_str = MazeFormatter.MazeFormatter(img_path, N, M, THRESHOLD).convert()
         self.maze = Maze(maze_str)
         self.start = start
         self.end = end or (self.maze.height - 2, self.maze.width - 2)
@@ -121,9 +123,7 @@ class Solution:
 
 
 if __name__ == "__main__":
-    with open(MAZE_PATH, "r") as file:
-        maze = file.readlines()
-    solution = Solution(maze)
+    solution = Solution(IMG_PATH)
     solution.print_maze()
     cv2.setMouseCallback("maze", solution.set_start_end)
 
