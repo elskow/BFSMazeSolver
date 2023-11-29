@@ -3,7 +3,6 @@ import os
 import numpy as np
 
 img_path = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
-output_path = os.path.join(os.path.dirname(__file__), "../example/maze.txt")
 
 
 class MazeFormatter:
