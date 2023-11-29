@@ -54,7 +54,9 @@ class Maze:
     """Represents the maze."""
 
     def __init__(self, maze_str):
-        self.maze = np.array([list(map(int, x.strip().split(" "))) for x in maze_str.split("\n") if x])
+        self.maze = np.array(
+            [list(map(int, x.strip().split(" "))) for x in maze_str.split("\n") if x]
+        )
         self.height, self.width = self.shape = self.maze.shape
 
     def get_val(self, x, y):
@@ -67,13 +69,17 @@ class Maze:
 class Solution:
     """Finds a solution to the maze."""
 
-    def __init__(self, img_path, start=None, end=None):
-        maze_str = MazeFormatter.MazeFormatter(img_path, N, M, THRESHOLD).convert()
-        self.maze = Maze(maze_str)
-        self.start = start
-        self.end = end or (self.maze.height - 2, self.maze.width - 2)
+    def __init__(self, img_path, n=33, m=15, threshold=100, sleep_time=None):
+        self.start = None
+        self.end = None
         self.path = []
         self.clicks = 0
+        self.n = n
+        self.m = m
+        self.threshold = threshold
+        self.sleep_time = sleep_time
+        maze_str = MazeFormatter.MazeFormatter(img_path, n, m, threshold).convert()
+        self.maze = Maze(maze_str)
 
     def set_start_end(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -123,7 +129,7 @@ class Solution:
 
 
 if __name__ == "__main__":
-    solution = Solution(IMG_PATH)
+    solution = Solution(IMG_PATH, N, M, THRESHOLD, SLEEP_TIME)
     solution.print_maze()
     cv2.setMouseCallback("maze", solution.set_start_end)
 

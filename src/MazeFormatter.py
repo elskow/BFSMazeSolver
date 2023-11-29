@@ -7,6 +7,7 @@ N = 33
 M = 15
 THRESHOLD = 90
 
+
 class MazeFormatter:
     def __init__(self, img_path, N=33, m=15, threshold=90):
         self.img_path = img_path
@@ -17,7 +18,7 @@ class MazeFormatter:
         self.threshold = threshold
 
     def convert(self):
-        maze = ''
+        maze = ""
         for i in range(self.N):
             for j in range(self.N):
                 val = int(
@@ -31,7 +32,13 @@ class MazeFormatter:
         return maze
 
     def show(self):
-        maze = np.array([list(map(int, x.strip().split(" "))) for x in self.convert().split("\n") if x])
+        maze = np.array(
+            [
+                list(map(int, x.strip().split(" ")))
+                for x in self.convert().split("\n")
+                if x
+            ]
+        )
         maze_resized = np.repeat(maze, 15, axis=0)
         maze_resized = np.repeat(maze_resized, 15, axis=1)
         maze_resized = maze_resized.astype(np.uint8) * 255  # 0 is black, 255 is white
