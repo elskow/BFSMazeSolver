@@ -7,9 +7,8 @@ output_path = os.path.join(os.path.dirname(__file__), "../example/maze.txt")
 
 
 class MazeFormatter:
-    def __init__(self, img_path, output_path, N=33, m=15, threshold=100):
+    def __init__(self, img_path, N=33, m=15, threshold=90):
         self.img_path = img_path
-        self.output_path = output_path
         self.img = cv2.imread(img_path, 0)
         self.img = cv2.resize(self.img, (495, 495))
         self.N = N
@@ -17,7 +16,7 @@ class MazeFormatter:
         self.threshold = threshold
 
     def convert(self):
-        foo = open(self.output_path, "w")
+        maze = ''
         for i in range(self.N):
             for j in range(self.N):
                 val = int(
@@ -25,22 +24,23 @@ class MazeFormatter:
                         i * self.m : (i + 1) * self.m, j * self.m : (j + 1) * self.m
                     ].mean()
                 )
-                foo.write("{} ".format(1 if val > self.threshold else 0))
-            foo.write("\n")
-        foo.close()
+                maze += "{} ".format(1 if val > self.threshold else 0)
+            maze += "\n"
+
+        return maze
 
     def show(self):
-        maze = np.loadtxt(self.output_path)
-        maze = np.repeat(maze, 15, axis=0)
-        maze = np.repeat(maze, 15, axis=1)
-        maze = maze.astype(np.uint8) * 255
-        maze = 255 - maze
-        cv2.imshow("Maze Preview", maze)
+        maze = np.array([list(map(int, x.strip().split(" "))) for x in self.convert().split("\n") if x])
+        maze_resized = np.repeat(maze, 15, axis=0)
+        maze_resized = np.repeat(maze_resized, 15, axis=1)
+        maze_resized = maze_resized.astype(np.uint8) * 255  # 0 is black, 255 is white
+        maze_resized = 255 - maze_resized
+        cv2.imshow("Maze Preview", maze_resized)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
-    rm = MazeFormatter(img_path, output_path)
-    rm.convert()
+    rm = MazeFormatter(img_path)
+    print(rm.convert())
     rm.show()
