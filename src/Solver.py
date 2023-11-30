@@ -1,104 +1,134 @@
+import cv2
 import numpy as np
 import os
 import time
-import cv2
+from tkinter import messagebox
 
+from Maze import Maze
 from MazeFormatter import MazeFormatter
 from MazePoint import Point
-from Maze import Maze
-
 
 IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
 SLEEP_TIME = 0.01
-N = 33
-M = 15
+GRID_SIZE = (33, 15)
 THRESHOLD = 100
+COLOR_MAP = {
+    "path": 255,  # white
+    "wall": 0,  # black
+    "start": 180,  # grey
+    "end": 50,  # dark grey
+}
 
 
-class Solution:
+class MazeSolver:
     """Finds a solution to the maze."""
 
-    def __init__(self, img_path, n=33, m=15, threshold=100, sleep_time=None):
-        self.board = None
-        self.start = None
-        self.end = None
-        self.path = []
-        self.clicks = 0
-        self.n = n
-        self.m = m
+    def __init__(self, img_path, grid_size, threshold, sleep_time):
+        self.grid_size = grid_size
         self.threshold = threshold
         self.sleep_time = sleep_time
-        maze_str = MazeFormatter(img_path, n, m, threshold).convert()
-        self.maze = Maze(maze_str)
 
-    def set_start_end(self, event, x, y, flags, param):
-        if event == cv2.EVENT_LBUTTONDOWN:
-            maze_x, maze_y = y // 20, x // 20
-            self.clicks += 1
-            if self.clicks == 1:
-                self.start = (maze_x, maze_y)
-            elif self.clicks == 2:
-                self.end = (maze_x, maze_y)
-                self.solve()
+        self.maze_str = MazeFormatter(img_path, *grid_size, threshold).convert()
+        self.maze = Maze(self.maze_str)
+
+        self.board, self.start, self.end, self.path, self.clicks = (
+            None,
+            None,
+            None,
+            [],
+            0,
+        )
 
     def print_maze(self):
-        os.system("cls")
+        """Prints the maze to the console and updates the board."""
         print(self.maze.maze)
+        self.update_board()
 
+    def update_board(self):
+        """Updates the board with the current state of the maze."""
         self.board = self.maze.maze.astype(np.uint8)
-        self.board[self.board == 0] = 255
-        self.board[self.board == 1] = 0
-        self.board[self.board == 2] = 180
-        self.board[self.board == 3] = 50
+        for key, value in COLOR_MAP.items():
+            if key == "path":
+                self.board[self.board == 0] = value
+            elif key == "wall":
+                self.board[self.board == 1] = value
+            elif key == "start":
+                self.board[self.board == 2] = value
+            elif key == "end":
+                self.board[self.board == 3] = value
 
-        self.n = 20
-        self.board = self.board.repeat(self.n, axis=0).repeat(self.n, axis=1)
-        cv2.imshow("maze", self.board)
+        self.board = cv2.cvtColor(self.board, cv2.COLOR_GRAY2BGR)
+        self.board[self.maze.maze == 2] = [0, 0, 255]
+
+        self.board = self.board.repeat(20, axis=0).repeat(20, axis=1)
+        cv2.imshow("Maze", self.board)
         cv2.waitKey(1)
 
+    def draw_circle(self, center, color):
+        """Draws a circle at the given center with the given color."""
+        cv2.circle(self.board, center, 10, color, -1)
+        cv2.imshow("Maze", self.board)
+        cv2.waitKey(1)
+
+    def handle_click(self, x, y, color):
+        """Handles a click event at the given coordinates with the given color."""
+        maze_x, maze_y = y // 20, x // 20
+        self.clicks += 1
+        center_x, center_y = maze_y * 20 + 10, maze_x * 20 + 10
+        self.draw_circle((center_x, center_y), color)
+        return maze_x, maze_y
+
+    def set_start_end(self, event, x, y, flags, param):
+        """Sets the start and end points of the maze."""
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if self.clicks == 0:
+                self.start = self.handle_click(x, y, (0, 255, 0))
+            elif self.clicks == 1:
+                self.end = self.handle_click(x, y, (0, 0, 255))
+                self.solve()
+
     def solve(self):
+        """Solves the maze."""
         self.path.append(Point(*self.start))
         self.maze.set_value(*self.start, 2)
         self.print_maze()
+
         while True:
-            time.sleep(SLEEP_TIME)
+            time.sleep(self.sleep_time)
             try:
                 current_point = self.path[-1]
             except IndexError:
-                print("No solution found")
+                self.end_solve("No solution found")
                 break
 
             if current_point.pos == self.end:
-                print("done")
+                self.end_solve("Maze solved successfully")
                 break
-            d = current_point.get_dir(self.maze)
-            if d:
-                current_point = Point(*current_point.get_coord(d), d)
+
+            direction = current_point.get_dir(self.maze)
+            if direction:
+                current_point = Point(*current_point.get_coord(direction), direction)
                 self.maze.set_value(*current_point.pos, 2)
                 self.print_maze()
                 self.path.append(current_point)
             else:
-                current_point = self.path.pop()
+                self.path.pop()
                 self.maze.set_value(*current_point.pos, 3)
                 self.print_maze()
 
+    def end_solve(self, message):
+        """Ends the solving process and displays a message."""
+        messagebox.showinfo("Maze Solver", message)
+        cv2.destroyAllWindows()
+
+
+def main():
+    solver = MazeSolver(IMG_PATH, GRID_SIZE, THRESHOLD, SLEEP_TIME)
+    solver.print_maze()
+    cv2.setMouseCallback("Maze", solver.set_start_end)
+    messagebox.showinfo("Maze Solver", "Please click start and end points")
+    cv2.waitKey(0)
+
 
 if __name__ == "__main__":
-    solution = Solution(IMG_PATH, N, M, THRESHOLD, SLEEP_TIME)
-    solution.print_maze()
-    cv2.setMouseCallback("maze", solution.set_start_end)
-
-    message = np.zeros((200, 600), dtype="uint8")
-    cv2.putText(
-        message,
-        "Please click start and end points",
-        (20, 100),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        1,
-        (255, 255, 255),
-        2,
-    )
-    cv2.imshow("Message", message)
-    cv2.waitKey(0)
-
-    cv2.waitKey(0)
+    main()
