@@ -18,6 +18,7 @@ COLOR_MAP = {
     "start": 180,  # grey
     "end": 50,  # dark grey
 }
+VERBOSE = False
 
 
 class MazeSolver:
@@ -39,9 +40,10 @@ class MazeSolver:
             0,
         )
 
-    def print_maze(self):
+    def print_maze(self, verbose=False):
         """Prints the maze to the console and updates the board."""
-        print(self.maze.maze)
+        if verbose:
+            print(self.maze.maze)
         self.update_board()
 
     def update_board(self):
@@ -124,7 +126,7 @@ class MazeSolver:
 
 def main():
     solver = MazeSolver(IMG_PATH, GRID_SIZE, THRESHOLD, SLEEP_TIME)
-    solver.print_maze()
+    solver.print_maze(VERBOSE)
     cv2.setMouseCallback("Maze", solver.set_start_end)
     messagebox.showinfo("Maze Solver", "Please click start and end points")
     cv2.waitKey(0)
