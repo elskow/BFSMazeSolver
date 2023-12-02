@@ -2,7 +2,7 @@ import cv2
 import os
 import numpy as np
 
-IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze2.jpg")
+IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze5.jpg")
 N = 33
 M = 15
 
@@ -22,6 +22,8 @@ class MazeFormatter:
         maze = ""
         white_cells = 0
         black_cells = 0
+        thick_walls = 0
+        thin_walls = 0
         for i in range(self.N):
             for j in range(self.N):
                 val = int(
@@ -35,9 +37,32 @@ class MazeFormatter:
                     white_cells += 1
                 else:
                     black_cells += 1
+
+                larger_area_val = int(
+                    self.img[
+                        max(0, (i - 1) * self.m) : min(
+                            (i + 2) * self.m, self.img.shape[0]
+                        ),
+                        max(0, (j - 1) * self.m) : min(
+                            (j + 2) * self.m, self.img.shape[1]
+                        ),
+                    ].mean()
+                )
+                if larger_area_val < 127:
+                    thick_walls += 1
+                else:
+                    thin_walls += 1
+
             maze += "\n"
 
-        if white_cells < black_cells:
+        wall_thickness = "thick" if thick_walls > thin_walls else "thin"
+
+        if white_cells > black_cells:
+            maze = maze.replace("0", "2")
+            maze = maze.replace("1", "0")
+            maze = maze.replace("2", "1")
+
+        if wall_thickness == "thick":
             maze = maze.replace("0", "2")
             maze = maze.replace("1", "0")
             maze = maze.replace("2", "1")
