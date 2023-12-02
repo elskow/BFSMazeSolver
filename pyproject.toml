@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "bfs_maze_solver"
+version = "0.1.0"
+description = "A simple maze solver using BFS algorithm with GUI on Python."
+authors = ["elskow"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.26.2"
+opencv-python = "^4.8.1.78"
+tk = "^0.1.0"
+black = "^23.11.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
