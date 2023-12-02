@@ -2,7 +2,7 @@ import cv2
 import os
 import numpy as np
 
-IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
+IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze2.jpg")
 N = 33
 M = 15
 
@@ -20,6 +20,8 @@ class MazeFormatter:
 
     def convert(self):
         maze = ""
+        white_cells = 0
+        black_cells = 0
         for i in range(self.N):
             for j in range(self.N):
                 val = int(
@@ -27,8 +29,18 @@ class MazeFormatter:
                         i * self.m : (i + 1) * self.m, j * self.m : (j + 1) * self.m
                     ].mean()
                 )
-                maze += "{} ".format(1 if val > 127 else 0)
+                cell = 1 if val > 127 else 0
+                maze += "{} ".format(cell)
+                if cell == 1:
+                    white_cells += 1
+                else:
+                    black_cells += 1
             maze += "\n"
+
+        if white_cells < black_cells:
+            maze = maze.replace("0", "2")
+            maze = maze.replace("1", "0")
+            maze = maze.replace("2", "1")
 
         return maze
 
