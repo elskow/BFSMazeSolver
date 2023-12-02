@@ -11,7 +11,6 @@ from MazePoint import Point
 IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
 SLEEP_TIME = 0.01
 GRID_SIZE = (33, 15)
-THRESHOLD = 100
 COLOR_MAP = {
     "path": 255,  # white
     "wall": 0,  # black
@@ -24,12 +23,11 @@ VERBOSE = False
 class MazeSolver:
     """Finds a solution to the maze."""
 
-    def __init__(self, img_path, grid_size, threshold, sleep_time):
+    def __init__(self, img_path, grid_size, sleep_time):
         self.grid_size = grid_size
-        self.threshold = threshold
         self.sleep_time = sleep_time
 
-        self.maze_str = MazeFormatter(img_path, *grid_size, threshold).convert()
+        self.maze_str = MazeFormatter(img_path, *grid_size).convert()
         self.maze = Maze(self.maze_str)
 
         self.board, self.start, self.end, self.path, self.clicks = (
@@ -125,7 +123,7 @@ class MazeSolver:
 
 
 def main():
-    solver = MazeSolver(IMG_PATH, GRID_SIZE, THRESHOLD, SLEEP_TIME)
+    solver = MazeSolver(IMG_PATH, GRID_SIZE, SLEEP_TIME)
     solver.print_maze(VERBOSE)
     cv2.setMouseCallback("Maze", solver.set_start_end)
     messagebox.showinfo("Maze Solver", "Please click start and end points")

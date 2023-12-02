@@ -5,17 +5,18 @@ import numpy as np
 IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
 N = 33
 M = 15
-THRESHOLD = 90
 
 
 class MazeFormatter:
-    def __init__(self, img_path, N=33, m=15, threshold=90):
+    def __init__(self, img_path, N=33, m=15):
         self.img_path = img_path
         self.img = cv2.imread(img_path, 0)
         self.img = cv2.resize(self.img, (495, 495))
+        _, self.img = cv2.threshold(
+            self.img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        )
         self.N = N
         self.m = m
-        self.threshold = threshold
 
     def convert(self):
         maze = ""
@@ -26,7 +27,7 @@ class MazeFormatter:
                         i * self.m : (i + 1) * self.m, j * self.m : (j + 1) * self.m
                     ].mean()
                 )
-                maze += "{} ".format(1 if val > self.threshold else 0)
+                maze += "{} ".format(1 if val > 127 else 0)
             maze += "\n"
 
         return maze
@@ -49,6 +50,6 @@ class MazeFormatter:
 
 
 if __name__ == "__main__":
-    rm = MazeFormatter(IMG_PATH, N, M, THRESHOLD)
+    rm = MazeFormatter(IMG_PATH, N, M)
     print(rm.convert())
     rm.show()
