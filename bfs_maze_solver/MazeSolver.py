@@ -8,8 +8,9 @@ from PyQt5.QtWidgets import (
     QAction,
     QVBoxLayout,
     QStatusBar,
+    QFileDialog,
 )
-from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor, QFont
 from PyQt5.QtCore import Qt, QTimer
 import numpy as np
 import os
@@ -43,15 +44,63 @@ class MazeSolver(QMainWindow):
         self.setFocus()
         self.setWindowFlags(Qt.WindowCloseButtonHint)
         self.setWindowIconText("Maze Solver")
+        self.setStyleSheet(
+            "QMainWindow {background-color: #2b2b2b; border: 1px solid black;}"
+            "QMenuBar {background-color: #2b2b2b; color: white;}"
+            "QMenuBar::item {background-color: #2b2b2b; color: white;}"
+            "QMenuBar::item::selected {background-color: #3b3b3b; color: white;}"
+            "QMenu {background-color: #2b2b2b; color: white;}"
+            "QMenu::item::selected {background-color: #3b3b3b; color: white;}"
+            "QStatusBar {background-color: #2b2b2b; color: white;}"
+            "QToolTip {background-color: #3b3b3b; color: white; border: 1px solid white;}"
+        )
+
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self.layout.setContentsMargins(10, 10, 10, 10)
+        self.layout.setSpacing(10)
+
+        font = QFont("Inter", 10)
+        self.setFont(font)
 
         # Create a menu bar
         self.menuBar = QMenuBar(self)
         self.setMenuBar(self.menuBar)
+
+        # Create a File menu
         self.fileMenu = QMenu("File", self)
         self.menuBar.addMenu(self.fileMenu)
-        self.newMazeAction = QAction("Reset", self)
-        self.fileMenu.addAction(self.newMazeAction)
-        self.newMazeAction.triggered.connect(self.new_maze)
+
+        # Add actions to the File menu
+        self.openImageAction = QAction("Open Image", self)
+        self.fileMenu.addAction(self.openImageAction)
+        self.openImageAction.triggered.connect(self.open_image)
+
+        self.exitAction = QAction("Exit", self)
+        self.fileMenu.addAction(self.exitAction)
+        self.exitAction.triggered.connect(self.close)
+
+        # Create an Actions menu
+        self.actionsMenu = QMenu("Actions", self)
+        self.menuBar.addMenu(self.actionsMenu)
+
+        # Add actions to the Actions menu
+        self.resetAction = QAction("Reset", self)
+        self.actionsMenu.addAction(self.resetAction)
+        self.resetAction.triggered.connect(self.reset_maze)
+
+        # Add a Help menu
+        self.helpMenu = QMenu("Help", self)
+        self.menuBar.addMenu(self.helpMenu)
+        self.aboutAction = QAction("About", self)
+        self.helpMenu.addAction(self.aboutAction)
+        self.aboutAction.triggered.connect(self.about)
+
+        # Add tooltips to the menu items
+        self.openImageAction.setToolTip("Open an image file of a maze")
+        self.exitAction.setToolTip("Exit the application")
+        self.resetAction.setToolTip("Reset the maze to its original state")
+        self.aboutAction.setToolTip("Show information about the application")
 
         # Create a status bar
         self.statusBar = QStatusBar(self)
@@ -146,8 +195,8 @@ class MazeSolver(QMainWindow):
         self.label.setPixmap(pixmap)
         return maze_x, maze_y
 
-    def new_maze(self):
-        """Creates a new maze."""
+    def reset_maze(self):
+        """Resets the maze to its original state."""
         self.maze_str = MazeFormatter(IMG_PATH, *GRID_SIZE).convert()
         self.maze = Maze(self.maze_str)
         self.board, self.start, self.end, self.path, self.clicks = (
@@ -161,6 +210,39 @@ class MazeSolver(QMainWindow):
             (*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8
         )
         self.print_maze()
+
+    def open_image(self):
+        """Opens an image file."""
+        img_path, _ = QFileDialog.getOpenFileName(
+            self, "Open Image", "", "Images (*.png *.xpm *.jpg)"
+        )
+        if img_path:
+            self.maze_str = MazeFormatter(img_path, *self.grid_size).convert()
+            self.maze = Maze(self.maze_str)
+            self.board, self.start, self.end, self.path, self.clicks = (
+                None,
+                None,
+                None,
+                [],
+                0,
+            )
+            self.colors = np.full(
+                (*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8
+            )
+            self.print_maze()
+            QApplication.processEvents()
+
+    def about(self):
+        """Shows information about the application."""
+        QMessageBox.about(
+            self,
+            "About Maze Solver",
+            "Maze Solver is an application that finds a solution to a maze.\n\n"
+            "To use the application, open an image file of a maze and click on the start "
+            "and end points of the maze. The application will then find a solution to the "
+            "maze and highlight the shortest path in red.\n\n"
+            "The application was created by your friendly neighborhood programmer.",
+        )
 
     def solve(self):
         """Solves the maze."""
@@ -183,7 +265,12 @@ class MazeSolver(QMainWindow):
                 self.end_solve("Maze solved successfully")
                 break
 
-            direction = current_point.get_dir(self.maze)
+            try:
+                direction = current_point.get_dir(self.maze)
+            except IndexError:
+                self.end_solve("Invalid maze configuration")
+                break
+
             if direction:
                 current_point = Point(*current_point.get_coord(direction), direction)
                 self.maze.set_value(*current_point.pos, 2)
@@ -208,8 +295,8 @@ class MazeSolver(QMainWindow):
     def end_solve(self, message):
         """Ends the solving process and displays a message."""
         self.statusBar.showMessage(message)
-        # keep the message box open for 2 seconds
-        # self.close()
+        QApplication.processEvents()
+        QApplication.beep()
 
 
 def main():
