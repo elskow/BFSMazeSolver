@@ -13,10 +13,10 @@ IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
 SLEEP_TIME = 10
 GRID_SIZE = (33, 15)
 COLOR_MAP = {
-    "path": 255,  # white
-    "wall": 0,  # black
-    "start": 180,  # grey
-    "end": 50,  # dark grey
+    "path": (255, 255, 255),  # white
+    "wall": (0, 0, 0),  # black
+    "start": (255, 0, 0),  # red
+    "end": (50, 50, 50),  # dark grey
 }
 VERBOSE = False
 
@@ -45,7 +45,9 @@ class MazeSolver(QMainWindow):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_board)
         self.timer.start(1000 * self.sleep_time)
-
+        self.colors = np.full(
+            (*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8
+        )
         self.print_maze()
 
     def print_maze(self, verbose=False):
@@ -56,23 +58,24 @@ class MazeSolver(QMainWindow):
 
     def update_board(self):
         """Updates the board with the current state of the maze."""
-        self.board = self.maze.maze.astype(np.uint8)
+        colors = np.full((*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8)
         for key, value in COLOR_MAP.items():
             if key == "path":
-                self.board[self.board == 0] = value
+                colors[self.maze.maze == 0] = value
             elif key == "wall":
-                self.board[self.board == 1] = value
+                colors[self.maze.maze == 1] = value
             elif key == "start":
-                self.board[self.board == 2] = value
+                colors[self.maze.maze == 2] = value
             elif key == "end":
-                self.board[self.board == 3] = value
+                colors[self.maze.maze == 3] = value
 
-        self.board = self.board.repeat(20, axis=0).repeat(20, axis=1)
+        self.colors = np.repeat(colors, 20, axis=0)
+        self.colors = np.repeat(self.colors, 20, axis=1)
         qimg = QImage(
-            self.board.data,
-            self.board.shape[1],
-            self.board.shape[0],
-            QImage.Format_Indexed8,
+            self.colors.data,
+            self.colors.shape[1],
+            self.colors.shape[0],
+            QImage.Format_RGB888,
         )
         self.label.setPixmap(QPixmap.fromImage(qimg))
 
@@ -90,10 +93,10 @@ class MazeSolver(QMainWindow):
         maze_x, maze_y = y // 20, x // 20
         self.clicks += 1
         qimg = QImage(
-            self.board.data,
-            self.board.shape[1],
-            self.board.shape[0],
-            QImage.Format_Indexed8,
+            self.colors.data,
+            self.colors.shape[1],
+            self.colors.shape[0],
+            QImage.Format_RGB888,
         )
         pixmap = QPixmap.fromImage(qimg)
         qp = QPainter(pixmap)
@@ -108,6 +111,7 @@ class MazeSolver(QMainWindow):
         self.path.append(Point(*self.start))
         self.maze.set_value(*self.start, 2)
         self.print_maze()
+        self.colors[self.start] = COLOR_MAP["start"]
         self.update_board()  # Update the board after setting the start point
         QApplication.processEvents()
 
@@ -119,6 +123,7 @@ class MazeSolver(QMainWindow):
                 break
 
             if current_point.pos == self.end:
+                self.highlight_path()  # Highlight the path after the maze is solved
                 self.end_solve("Maze solved successfully")
                 break
 
