@@ -1,14 +1,25 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QMessageBox
-from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor, QIcon
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QLabel,
+    QMessageBox,
+    QMenuBar,
+    QMenu,
+    QAction,
+    QVBoxLayout,
+    QStatusBar,
+)
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor
 from PyQt5.QtCore import Qt, QTimer
 import numpy as np
 import os
-import time
 
 from Maze import Maze
 from MazeFormatter import MazeFormatter
 from MazePoint import Point
 
+
+# Constants
 IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
 SLEEP_TIME = 10
 GRID_SIZE = (33, 15)
@@ -18,7 +29,6 @@ COLOR_MAP = {
     "start": (255, 0, 0),  # red
     "end": (50, 50, 50),  # dark grey
 }
-VERBOSE = False
 APP_TITLE = "Maze Solver"
 
 
@@ -28,12 +38,24 @@ class MazeSolver(QMainWindow):
     def __init__(self, img_path, grid_size, sleep_time, title="Maze Solver"):
         super().__init__()
         self.setWindowTitle(title)
-        self.setMenuWidget(QLabel(""))
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setFocus()
         self.setWindowFlags(Qt.WindowCloseButtonHint)
         self.setWindowIconText("Maze Solver")
+
+        # Create a menu bar
+        self.menuBar = QMenuBar(self)
+        self.setMenuBar(self.menuBar)
+        self.fileMenu = QMenu("File", self)
+        self.menuBar.addMenu(self.fileMenu)
+        self.newMazeAction = QAction("Reset", self)
+        self.fileMenu.addAction(self.newMazeAction)
+        self.newMazeAction.triggered.connect(self.new_maze)
+
+        # Create a status bar
+        self.statusBar = QStatusBar(self)
+        self.setStatusBar(self.statusBar)
 
         self.grid_size = grid_size
         self.sleep_time = sleep_time
@@ -124,6 +146,22 @@ class MazeSolver(QMainWindow):
         self.label.setPixmap(pixmap)
         return maze_x, maze_y
 
+    def new_maze(self):
+        """Creates a new maze."""
+        self.maze_str = MazeFormatter(IMG_PATH, *GRID_SIZE).convert()
+        self.maze = Maze(self.maze_str)
+        self.board, self.start, self.end, self.path, self.clicks = (
+            None,
+            None,
+            None,
+            [],
+            0,
+        )
+        self.colors = np.full(
+            (*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8
+        )
+        self.print_maze()
+
     def solve(self):
         """Solves the maze."""
         self.path.append(Point(*self.start))
@@ -169,8 +207,9 @@ class MazeSolver(QMainWindow):
 
     def end_solve(self, message):
         """Ends the solving process and displays a message."""
-        QMessageBox.information(self, "Maze Solver", message)
-        self.close()
+        self.statusBar.showMessage(message)
+        # keep the message box open for 2 seconds
+        # self.close()
 
 
 def main():
