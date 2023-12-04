@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QMessageBox
-from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor, QIcon
 from PyQt5.QtCore import Qt, QTimer
 import numpy as np
 import os
@@ -19,13 +19,22 @@ COLOR_MAP = {
     "end": (50, 50, 50),  # dark grey
 }
 VERBOSE = False
+APP_TITLE = "Maze Solver"
 
 
 class MazeSolver(QMainWindow):
     """Finds a solution to the maze."""
 
-    def __init__(self, img_path, grid_size, sleep_time):
+    def __init__(self, img_path, grid_size, sleep_time, title="Maze Solver"):
         super().__init__()
+        self.setWindowTitle(title)
+        self.setMenuWidget(QLabel(""))
+        self.setMouseTracking(True)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocus()
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        self.setWindowIconText("Maze Solver")
+
         self.grid_size = grid_size
         self.sleep_time = sleep_time
 
@@ -157,7 +166,7 @@ class MazeSolver(QMainWindow):
 
 def main():
     app = QApplication([])
-    solver = MazeSolver(IMG_PATH, GRID_SIZE, SLEEP_TIME)
+    solver = MazeSolver(IMG_PATH, GRID_SIZE, SLEEP_TIME, APP_TITLE)
     solver.show()
     app.exec_()
 
