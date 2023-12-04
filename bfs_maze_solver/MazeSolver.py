@@ -99,7 +99,13 @@ class MazeSolver(QMainWindow):
 
     def handle_click(self, x, y, color):
         """Handles a click event at the given coordinates with the given color."""
-        maze_x, maze_y = y // 20, x // 20
+        label_size = self.label.size()
+        label_pos = self.label.pos()
+        cell_size_x = label_size.width() // self.maze.maze.shape[1]
+        cell_size_y = label_size.height() // self.maze.maze.shape[0]
+        maze_x, maze_y = (y - label_pos.y()) // cell_size_y, (
+            x - label_pos.x()
+        ) // cell_size_x
         self.clicks += 1
         qimg = QImage(
             self.colors.data,
@@ -110,7 +116,10 @@ class MazeSolver(QMainWindow):
         pixmap = QPixmap.fromImage(qimg)
         qp = QPainter(pixmap)
         qp.setPen(QPen(color, 10, Qt.SolidLine))
-        qp.drawPoint(maze_y * 20 + 10, maze_x * 20 + 10)
+        qp.drawPoint(
+            maze_y * cell_size_x + cell_size_x // 2,
+            maze_x * cell_size_y + cell_size_y // 2,
+        )
         qp.end()
         self.label.setPixmap(pixmap)
         return maze_x, maze_y
