@@ -177,6 +177,16 @@ class MazeSolver(QMainWindow):
         maze_x, maze_y = (y - label_pos.y()) // cell_size_y, (
             x - label_pos.x()
         ) // cell_size_x
+
+        # Check if the clicked point is a wall
+        if self.maze.maze[maze_x][maze_y] == 1 and self.clicks == 0:
+            QMessageBox.warning(
+                self,
+                "Invalid Click",
+                "You clicked on a wall. Please click on a path.",
+            )
+            return
+
         self.clicks += 1
         qimg = QImage(
             self.colors.data,
