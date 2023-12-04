@@ -1,29 +1,62 @@
-import cv2
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QLabel,
+    QMessageBox,
+    QMenuBar,
+    QMenu,
+    QAction,
+    QVBoxLayout,
+    QStatusBar,
+)
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor
+from PyQt5.QtCore import Qt, QTimer
 import numpy as np
 import os
-import time
-from tkinter import messagebox
 
 from Maze import Maze
 from MazeFormatter import MazeFormatter
 from MazePoint import Point
 
+
+# Constants
 IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
-SLEEP_TIME = 0.01
+SLEEP_TIME = 10
 GRID_SIZE = (33, 15)
 COLOR_MAP = {
-    "path": 255,  # white
-    "wall": 0,  # black
-    "start": 180,  # grey
-    "end": 50,  # dark grey
+    "path": (255, 255, 255),  # white
+    "wall": (0, 0, 0),  # black
+    "start": (255, 0, 0),  # red
+    "end": (50, 50, 50),  # dark grey
 }
-VERBOSE = False
+APP_TITLE = "Maze Solver"
 
 
-class MazeSolver:
+class MazeSolver(QMainWindow):
     """Finds a solution to the maze."""
 
-    def __init__(self, img_path, grid_size, sleep_time):
+    def __init__(self, img_path, grid_size, sleep_time, title="Maze Solver"):
+        super().__init__()
+        self.setWindowTitle(title)
+        self.setMouseTracking(True)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocus()
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        self.setWindowIconText("Maze Solver")
+
+        # Create a menu bar
+        self.menuBar = QMenuBar(self)
+        self.setMenuBar(self.menuBar)
+        self.fileMenu = QMenu("File", self)
+        self.menuBar.addMenu(self.fileMenu)
+        self.newMazeAction = QAction("Reset", self)
+        self.fileMenu.addAction(self.newMazeAction)
+        self.newMazeAction.triggered.connect(self.new_maze)
+
+        # Create a status bar
+        self.statusBar = QStatusBar(self)
+        self.setStatusBar(self.statusBar)
+
         self.grid_size = grid_size
         self.sleep_time = sleep_time
 
@@ -38,6 +71,16 @@ class MazeSolver:
             0,
         )
 
+        self.label = QLabel(self)
+        self.setCentralWidget(self.label)
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_board)
+        self.timer.start(1000 * self.sleep_time)
+        self.colors = np.full(
+            (*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8
+        )
+        self.print_maze()
+
     def print_maze(self, verbose=False):
         """Prints the maze to the console and updates the board."""
         if verbose:
@@ -46,55 +89,89 @@ class MazeSolver:
 
     def update_board(self):
         """Updates the board with the current state of the maze."""
-        self.board = self.maze.maze.astype(np.uint8)
+        colors = np.full((*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8)
         for key, value in COLOR_MAP.items():
             if key == "path":
-                self.board[self.board == 0] = value
+                colors[self.maze.maze == 0] = value
             elif key == "wall":
-                self.board[self.board == 1] = value
+                colors[self.maze.maze == 1] = value
             elif key == "start":
-                self.board[self.board == 2] = value
+                colors[self.maze.maze == 2] = value
             elif key == "end":
-                self.board[self.board == 3] = value
+                colors[self.maze.maze == 3] = value
 
-        self.board = cv2.cvtColor(self.board, cv2.COLOR_GRAY2BGR)
-        self.board[self.maze.maze == 2] = [0, 0, 255]
+        self.colors = np.repeat(colors, 20, axis=0)
+        self.colors = np.repeat(self.colors, 20, axis=1)
+        qimg = QImage(
+            self.colors.data,
+            self.colors.shape[1],
+            self.colors.shape[0],
+            QImage.Format_RGB888,
+        )
+        self.label.setPixmap(QPixmap.fromImage(qimg))
 
-        self.board = self.board.repeat(20, axis=0).repeat(20, axis=1)
-        cv2.imshow("Maze", self.board)
-        cv2.waitKey(1)
-
-    def draw_circle(self, center, color):
-        """Draws a circle at the given center with the given color."""
-        cv2.circle(self.board, center, 10, color, -1)
-        cv2.imshow("Maze", self.board)
-        cv2.waitKey(1)
+    def mousePressEvent(self, event):
+        """Sets the start and end points of the maze."""
+        if event.button() == Qt.LeftButton:
+            if self.clicks == 0:
+                self.start = self.handle_click(event.x(), event.y(), QColor(0, 255, 0))
+            elif self.clicks == 1:
+                self.end = self.handle_click(event.x(), event.y(), QColor(0, 0, 255))
+                self.solve()
 
     def handle_click(self, x, y, color):
         """Handles a click event at the given coordinates with the given color."""
-        maze_x, maze_y = y // 20, x // 20
+        label_size = self.label.size()
+        label_pos = self.label.pos()
+        cell_size_x = label_size.width() // self.maze.maze.shape[1]
+        cell_size_y = label_size.height() // self.maze.maze.shape[0]
+        maze_x, maze_y = (y - label_pos.y()) // cell_size_y, (
+            x - label_pos.x()
+        ) // cell_size_x
         self.clicks += 1
-        center_x, center_y = maze_y * 20 + 10, maze_x * 20 + 10
-        self.draw_circle((center_x, center_y), color)
+        qimg = QImage(
+            self.colors.data,
+            self.colors.shape[1],
+            self.colors.shape[0],
+            QImage.Format_RGB888,
+        )
+        pixmap = QPixmap.fromImage(qimg)
+        qp = QPainter(pixmap)
+        qp.setPen(QPen(color, 10, Qt.SolidLine))
+        qp.drawPoint(
+            maze_y * cell_size_x + cell_size_x // 2,
+            maze_x * cell_size_y + cell_size_y // 2,
+        )
+        qp.end()
+        self.label.setPixmap(pixmap)
         return maze_x, maze_y
 
-    def set_start_end(self, event, x, y, flags, param):
-        """Sets the start and end points of the maze."""
-        if event == cv2.EVENT_LBUTTONDOWN:
-            if self.clicks == 0:
-                self.start = self.handle_click(x, y, (0, 255, 0))
-            elif self.clicks == 1:
-                self.end = self.handle_click(x, y, (0, 0, 255))
-                self.solve()
+    def new_maze(self):
+        """Creates a new maze."""
+        self.maze_str = MazeFormatter(IMG_PATH, *GRID_SIZE).convert()
+        self.maze = Maze(self.maze_str)
+        self.board, self.start, self.end, self.path, self.clicks = (
+            None,
+            None,
+            None,
+            [],
+            0,
+        )
+        self.colors = np.full(
+            (*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8
+        )
+        self.print_maze()
 
     def solve(self):
         """Solves the maze."""
         self.path.append(Point(*self.start))
         self.maze.set_value(*self.start, 2)
         self.print_maze()
+        self.colors[self.start] = COLOR_MAP["start"]
+        self.update_board()  # Update the board after setting the start point
+        QApplication.processEvents()
 
         while True:
-            time.sleep(self.sleep_time)
             try:
                 current_point = self.path[-1]
             except IndexError:
@@ -102,6 +179,7 @@ class MazeSolver:
                 break
 
             if current_point.pos == self.end:
+                self.highlight_path()  # Highlight the path after the maze is solved
                 self.end_solve("Maze solved successfully")
                 break
 
@@ -110,24 +188,35 @@ class MazeSolver:
                 current_point = Point(*current_point.get_coord(direction), direction)
                 self.maze.set_value(*current_point.pos, 2)
                 self.print_maze()
+                self.update_board()  # Update the board after each step
+                QApplication.processEvents()
                 self.path.append(current_point)
             else:
                 self.path.pop()
                 self.maze.set_value(*current_point.pos, 3)
                 self.print_maze()
+                self.update_board()  # Update the board after backtracking
+                QApplication.processEvents()
+
+    def highlight_path(self):
+        """Highlights the shortest path in red."""
+        for point in self.path:
+            self.handle_click(point.pos[1] * 20, point.pos[0] * 20, QColor(255, 0, 0))
+        self.update_board()
+        QApplication.processEvents()
 
     def end_solve(self, message):
         """Ends the solving process and displays a message."""
-        messagebox.showinfo("Maze Solver", message)
-        cv2.destroyAllWindows()
+        self.statusBar.showMessage(message)
+        # keep the message box open for 2 seconds
+        # self.close()
 
 
 def main():
-    solver = MazeSolver(IMG_PATH, GRID_SIZE, SLEEP_TIME)
-    solver.print_maze(VERBOSE)
-    cv2.setMouseCallback("Maze", solver.set_start_end)
-    messagebox.showinfo("Maze Solver", "Please click start and end points")
-    cv2.waitKey(0)
+    app = QApplication([])
+    solver = MazeSolver(IMG_PATH, GRID_SIZE, SLEEP_TIME, APP_TITLE)
+    solver.show()
+    app.exec_()
 
 
 if __name__ == "__main__":
