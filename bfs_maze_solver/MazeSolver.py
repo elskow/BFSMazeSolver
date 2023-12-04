@@ -108,6 +108,8 @@ class MazeSolver(QMainWindow):
         self.path.append(Point(*self.start))
         self.maze.set_value(*self.start, 2)
         self.print_maze()
+        self.update_board()  # Update the board after setting the start point
+        QApplication.processEvents()
 
         while True:
             try:
@@ -118,7 +120,6 @@ class MazeSolver(QMainWindow):
 
             if current_point.pos == self.end:
                 self.end_solve("Maze solved successfully")
-                self.highlight_path()
                 break
 
             direction = current_point.get_dir(self.maze)
@@ -126,17 +127,22 @@ class MazeSolver(QMainWindow):
                 current_point = Point(*current_point.get_coord(direction), direction)
                 self.maze.set_value(*current_point.pos, 2)
                 self.print_maze()
+                self.update_board()  # Update the board after each step
+                QApplication.processEvents()
                 self.path.append(current_point)
             else:
                 self.path.pop()
                 self.maze.set_value(*current_point.pos, 3)
                 self.print_maze()
+                self.update_board()  # Update the board after backtracking
+                QApplication.processEvents()
 
     def highlight_path(self):
         """Highlights the shortest path in red."""
         for point in self.path:
             self.handle_click(point.pos[1] * 20, point.pos[0] * 20, QColor(255, 0, 0))
         self.update_board()
+        QApplication.processEvents()
 
     def end_solve(self, message):
         """Ends the solving process and displays a message."""
