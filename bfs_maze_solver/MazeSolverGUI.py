@@ -22,9 +22,7 @@ from .MazeSolverLogic import MazeSolverLogic
 class MazeSolverGUI(QMainWindow):
     """GUI for the Maze Solver."""
 
-    def __init__(
-        self, img_path, grid_size, sleep_time, title="Maze Solver", verbose=False
-    ):
+    def __init__(self, img_path, grid_size, sleep_time, title="Maze Solver"):
         super().__init__()
         self.maze_solver = None
         self.color_map = {
@@ -33,7 +31,6 @@ class MazeSolverGUI(QMainWindow):
             "start": (255, 0, 0),  # red
             "end": (90, 90, 90),  # dark grey
         }
-        self.verbose = verbose
 
         self.setWindowTitle(title)
         self.setMouseTracking(True)
@@ -56,6 +53,8 @@ class MazeSolverGUI(QMainWindow):
         self.init_menu_bar()
         self.init_status_bar()
 
+        QApplication.setStyle("Fusion")
+
         self.grid_size = grid_size
         self.sleep_time = sleep_time
 
@@ -63,13 +62,7 @@ class MazeSolverGUI(QMainWindow):
         self.maze_str = MazeReader(img_path, *grid_size).convert()
         self.maze = Maze(self.maze_str)
 
-        self.board, self.start, self.end, self.path, self.clicks = (
-            None,
-            None,
-            None,
-            [],
-            0,
-        )
+        self.start, self.end, self.clicks = None, None, 0
 
         self.label = QLabel(self)
         self.setCentralWidget(self.label)
@@ -77,7 +70,7 @@ class MazeSolverGUI(QMainWindow):
         self.colors = np.full(
             (*self.maze.maze.shape, 3), self.color_map["path"], dtype=np.uint8
         )
-        self.print_maze()
+        self.update_board()
 
     def init_layout(self):
         self.layout = QVBoxLayout()
@@ -86,6 +79,7 @@ class MazeSolverGUI(QMainWindow):
         self.layout.setSpacing(10)
 
         font = QFont("Inter", 10)
+        font.setStyleStrategy(QFont.PreferAntialias)
         self.setFont(font)
 
     def init_menu_bar(self):
@@ -124,12 +118,7 @@ class MazeSolverGUI(QMainWindow):
     def init_status_bar(self):
         self.statusBar = QStatusBar(self)
         self.setStatusBar(self.statusBar)
-
-    def print_maze(self):
-        """Prints the maze to the console and updates the board."""
-        if self.verbose:
-            print(self.maze.maze)
-        self.update_board()
+        self.statusBar.showMessage("Ready")
 
     def update_board(self):
         """Updates the board with the current state of the maze."""
@@ -192,6 +181,7 @@ class MazeSolverGUI(QMainWindow):
         )
         pixmap = QPixmap.fromImage(qimg)
         qp = QPainter(pixmap)
+        qp.setRenderHint(QPainter.Antialiasing, True)  # Enable antialiasing
         qp.setPen(QPen(color, 10, Qt.SolidLine))
         qp.drawPoint(
             maze_y * cell_size_x + cell_size_x // 2,
@@ -205,17 +195,12 @@ class MazeSolverGUI(QMainWindow):
         """Resets the maze to its original state."""
         self.maze_str = MazeReader(self.default_img_path, *self.grid_size).convert()
         self.maze = Maze(self.maze_str)
-        self.board, self.start, self.end, self.path, self.clicks = (
-            None,
-            None,
-            None,
-            [],
-            0,
-        )
+        self.start, self.end, self.clicks = None, None, 0
         self.colors = np.full(
             (*self.maze.maze.shape, 3), self.color_map["path"], dtype=np.uint8
         )
-        self.print_maze()
+        self.statusBar.showMessage("Ready")
+        self.update_board()
 
     def open_image(self):
         """Opens an image file."""
@@ -249,6 +234,9 @@ class MazeSolverGUI(QMainWindow):
         self.maze_solver = MazeSolverLogic(
             self.maze, self.start, self.end, self.update_gui, self.sleep_time
         )
+        self.statusBar.showMessage("Solving maze...")
+        QApplication.processEvents()
+
         self.maze_solver.solve()
 
         if self.maze_solver.is_solved:
