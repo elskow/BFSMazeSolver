@@ -7,7 +7,8 @@ N = 33
 M = 15
 
 
-class MazeFormatter:
+class MazeReader:
+    """Converts an image of a maze into a string representation of the maze."""
     def __init__(self, img_path: str, N: int = 33, m: int = 15):
         self.img_path = img_path
         self.img = self.load_and_format_image(img_path)
@@ -144,6 +145,6 @@ class MazeFormatter:
 
 
 if __name__ == "__main__":
-    rm = MazeFormatter(IMG_PATH, N, M)
+    rm = MazeReader(IMG_PATH, N, M)
     print(rm.convert())
     rm.show(border=True)

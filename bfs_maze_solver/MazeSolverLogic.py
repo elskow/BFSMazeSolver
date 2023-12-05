@@ -1,4 +1,4 @@
-from MazePoint import MazePoint as Point
+from .MazePoint import MazePoint
 from collections import deque
 
 
@@ -16,7 +16,7 @@ class MazeSolverLogic:
 
     def solve(self):
         """Solves the maze."""
-        self.path.append(Point(*self.start))
+        self.path.append(MazePoint(*self.start))
         self.maze.set_value(*self.start, 3)
 
         predecessor = {}
@@ -29,7 +29,7 @@ class MazeSolverLogic:
                 break
 
             for direction in range(1, 5):
-                next_point = Point(*current_point.get_coord(direction), direction)
+                next_point = MazePoint(*current_point.get_coord(direction), direction)
                 if self.maze.get_val(*next_point.pos) == 0:
                     self.maze.set_value(*next_point.pos, 3)
                     self.path.append(next_point)
@@ -39,7 +39,7 @@ class MazeSolverLogic:
 
         # Backtrack to find the shortest path
         if self.is_solved:
-            current_point = Point(*self.end)
+            current_point = MazePoint(*self.end)
             while current_point.pos != self.start:
                 self.maze.set_value(*current_point.pos, 2)
                 current_point = predecessor[current_point.pos]

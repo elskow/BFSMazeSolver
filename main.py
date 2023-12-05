@@ -1,9 +1,9 @@
-from MazeSolverGUI import MazeSolverGUI
+from bfs_maze_solver import MazeSolverGUI
 from PyQt5.QtWidgets import QApplication
 import os
 
 # Constants
-IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
+IMG_PATH = os.path.join(os.path.dirname(__file__), "example/maze0.jpg")
 SLEEP_TIME = 10
 GRID_SIZE = (33, 15)
 APP_TITLE = "Maze Solver"

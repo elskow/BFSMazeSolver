@@ -14,11 +14,9 @@ from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor, QFont
 from PyQt5.QtCore import Qt
 import numpy as np
 
-from Maze import Maze
-from MazeFormatter import MazeFormatter
-from MazeSolverLogic import MazeSolverLogic
-
-from collections import deque
+from .Maze import Maze
+from .MazeReader import MazeReader
+from .MazeSolverLogic import MazeSolverLogic
 
 
 class MazeSolverGUI(QMainWindow):
@@ -109,7 +107,7 @@ class MazeSolverGUI(QMainWindow):
         self.sleep_time = sleep_time
 
         self.default_img_path = img_path
-        self.maze_str = MazeFormatter(img_path, *grid_size).convert()
+        self.maze_str = MazeReader(img_path, *grid_size).convert()
         self.maze = Maze(self.maze_str)
 
         self.board, self.start, self.end, self.path, self.clicks = (
@@ -206,7 +204,7 @@ class MazeSolverGUI(QMainWindow):
 
     def reset_maze(self):
         """Resets the maze to its original state."""
-        self.maze_str = MazeFormatter(self.default_img_path, *self.grid_size).convert()
+        self.maze_str = MazeReader(self.default_img_path, *self.grid_size).convert()
         self.maze = Maze(self.maze_str)
         self.board, self.start, self.end, self.path, self.clicks = (
             None,

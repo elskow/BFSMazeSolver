@@ -20,7 +20,7 @@ A simple maze solver using BFS algorithm with GUI on Python. Made for the course
     > It's not included in the poetry dependencies because it's not working on poetry shell, so you need to install it manually on venv of poetry shell.
 4. Run the program
     ```bash
-    python .\bfs_maze_solver\main.py
+    python main.py
     ```
 ---
 
