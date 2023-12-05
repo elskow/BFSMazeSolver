@@ -22,7 +22,7 @@ from MazeSolverLogic import MazeSolverLogic
 class MazeSolverGUI(QMainWindow):
     """GUI for the Maze Solver."""
 
-    def __init__(self, img_path, grid_size, sleep_time, title="Maze Solver"):
+    def __init__(self, img_path, grid_size, sleep_time, title="Maze Solver", verbose=False):
         super().__init__()
         self.maze_solver = None
         self.color_map = {
@@ -31,6 +31,7 @@ class MazeSolverGUI(QMainWindow):
             "start": (255, 0, 0),  # red
             "end": (50, 50, 50),  # dark grey
         }
+        self.verbose = verbose
 
         self.setWindowTitle(title)
         self.setMouseTracking(True)
@@ -123,9 +124,9 @@ class MazeSolverGUI(QMainWindow):
         )
         self.print_maze()
 
-    def print_maze(self, verbose=False):
+    def print_maze(self):
         """Prints the maze to the console and updates the board."""
-        if verbose:
+        if self.verbose:
             print(self.maze.maze)
         self.update_board()
 
