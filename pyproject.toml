@@ -11,8 +11,6 @@ numpy = "^1.26.2"
 opencv-python = "^4.8.1.78"
 tk = "^0.1.0"
 black = "^23.11.0"
-PyQt5 = "^5.15.10"
-
 
 
 [build-system]
