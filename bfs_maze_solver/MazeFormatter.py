@@ -53,7 +53,7 @@ class MazeFormatter:
     def calculate_cell_value(self, i, j):
         val = int(
             self.img[
-                i * self.m: (i + 1) * self.m, j * self.m: (j + 1) * self.m
+                i * self.m : (i + 1) * self.m, j * self.m : (j + 1) * self.m
             ].mean()
         )
         cell = 1 if val > 127 else 0
@@ -70,8 +70,8 @@ class MazeFormatter:
     def calculate_larger_area_value(self, i, j):
         return int(
             self.img[
-                max(0, (i - 1) * self.m): min((i + 2) * self.m, self.img.shape[0]),
-                max(0, (j - 1) * self.m): min((j + 2) * self.m, self.img.shape[1]),
+                max(0, (i - 1) * self.m) : min((i + 2) * self.m, self.img.shape[0]),
+                max(0, (j - 1) * self.m) : min((j + 2) * self.m, self.img.shape[1]),
             ].mean()
         )
 

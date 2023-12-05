@@ -18,18 +18,22 @@ from Maze import Maze
 from MazeFormatter import MazeFormatter
 from MazeSolverLogic import MazeSolverLogic
 
+from collections import deque
+
 
 class MazeSolverGUI(QMainWindow):
     """GUI for the Maze Solver."""
 
-    def __init__(self, img_path, grid_size, sleep_time, title="Maze Solver", verbose=False):
+    def __init__(
+        self, img_path, grid_size, sleep_time, title="Maze Solver", verbose=False
+    ):
         super().__init__()
         self.maze_solver = None
         self.color_map = {
             "path": (255, 255, 255),  # white
             "wall": (0, 0, 0),  # black
             "start": (255, 0, 0),  # red
-            "end": (50, 50, 50),  # dark grey
+            "end": (90, 90, 90),  # dark grey
         }
         self.verbose = verbose
 
@@ -83,7 +87,7 @@ class MazeSolverGUI(QMainWindow):
         self.resetAction = QAction("Reset", self)
         self.actionsMenu.addAction(self.resetAction)
         self.resetAction.triggered.connect(self.reset_maze)
-        
+
         # Add a Help menu
         self.helpMenu = QMenu("Help", self)
         self.menuBar.addMenu(self.helpMenu)
@@ -118,7 +122,7 @@ class MazeSolverGUI(QMainWindow):
 
         self.label = QLabel(self)
         self.setCentralWidget(self.label)
-        
+
         self.colors = np.full(
             (*self.maze.maze.shape, 3), self.color_map["path"], dtype=np.uint8
         )
@@ -138,7 +142,9 @@ class MazeSolverGUI(QMainWindow):
             2: self.color_map["start"],
             3: self.color_map["end"],
         }
-        colors = np.full((*self.maze.maze.shape, 3), self.color_map["path"], dtype=np.uint8)
+        colors = np.full(
+            (*self.maze.maze.shape, 3), self.color_map["path"], dtype=np.uint8
+        )
         for key, value in color_map.items():
             colors[self.maze.maze == key] = value
 
@@ -197,7 +203,7 @@ class MazeSolverGUI(QMainWindow):
         qp.end()
         self.label.setPixmap(pixmap)
         return maze_x, maze_y
-    
+
     def reset_maze(self):
         """Resets the maze to its original state."""
         self.maze_str = MazeFormatter(self.default_img_path, *self.grid_size).convert()
@@ -243,7 +249,9 @@ class MazeSolverGUI(QMainWindow):
 
     def solve(self):
         """Solves the maze."""
-        self.maze_solver = MazeSolverLogic(self.maze, self.start, self.end, self.update_gui)
+        self.maze_solver = MazeSolverLogic(
+            self.maze, self.start, self.end, self.update_gui
+        )
         self.maze_solver.solve()
 
         if self.maze_solver.is_solved:
@@ -264,4 +272,3 @@ class MazeSolverGUI(QMainWindow):
         self.statusBar.showMessage(message)
         QApplication.processEvents()
         QApplication.beep()
-        
