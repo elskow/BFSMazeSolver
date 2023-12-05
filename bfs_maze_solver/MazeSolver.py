@@ -17,7 +17,7 @@ import os
 
 from Maze import Maze
 from MazeFormatter import MazeFormatter
-from MazePoint import Point
+from MazeSolverLogic import MazeSolverLogic
 
 
 # Constants
@@ -33,8 +33,8 @@ COLOR_MAP = {
 APP_TITLE = "Maze Solver"
 
 
-class MazeSolver(QMainWindow):
-    """Finds a solution to the maze."""
+class MazeSolverGUI(QMainWindow):
+    """GUI for the Maze Solver."""
 
     def __init__(self, img_path, grid_size, sleep_time, title="Maze Solver"):
         super().__init__()
@@ -89,6 +89,11 @@ class MazeSolver(QMainWindow):
         self.actionsMenu.addAction(self.resetAction)
         self.resetAction.triggered.connect(self.reset_maze)
 
+        #
+        self.solveAction = QAction("Solve", self)
+        self.actionsMenu.addAction(self.solveAction)
+        self.solveAction.triggered.connect(self.solve)
+        
         # Add a Help menu
         self.helpMenu = QMenu("Help", self)
         self.menuBar.addMenu(self.helpMenu)
@@ -100,6 +105,7 @@ class MazeSolver(QMainWindow):
         self.openImageAction.setToolTip("Open an image file of a maze")
         self.exitAction.setToolTip("Exit the application")
         self.resetAction.setToolTip("Reset the maze to its original state")
+        self.solveAction.setToolTip("Solve the maze")
         self.aboutAction.setToolTip("Show information about the application")
 
         # Create a status bar
@@ -122,9 +128,7 @@ class MazeSolver(QMainWindow):
 
         self.label = QLabel(self)
         self.setCentralWidget(self.label)
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update_board)
-        self.timer.start(1000 * self.sleep_time)
+        
         self.colors = np.full(
             (*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8
         )
@@ -138,16 +142,15 @@ class MazeSolver(QMainWindow):
 
     def update_board(self):
         """Updates the board with the current state of the maze."""
+        color_map = {
+            0: COLOR_MAP["path"],
+            1: COLOR_MAP["wall"],
+            2: COLOR_MAP["start"],
+            3: COLOR_MAP["end"],
+        }
         colors = np.full((*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8)
-        for key, value in COLOR_MAP.items():
-            if key == "path":
-                colors[self.maze.maze == 0] = value
-            elif key == "wall":
-                colors[self.maze.maze == 1] = value
-            elif key == "start":
-                colors[self.maze.maze == 2] = value
-            elif key == "end":
-                colors[self.maze.maze == 3] = value
+        for key, value in color_map.items():
+            colors[self.maze.maze == key] = value
 
         self.colors = np.repeat(colors, 20, axis=0)
         self.colors = np.repeat(self.colors, 20, axis=1)
@@ -204,7 +207,7 @@ class MazeSolver(QMainWindow):
         qp.end()
         self.label.setPixmap(pixmap)
         return maze_x, maze_y
-
+    
     def reset_maze(self):
         """Resets the maze to its original state."""
         self.maze_str = MazeFormatter(IMG_PATH, *GRID_SIZE).convert()
@@ -254,50 +257,25 @@ class MazeSolver(QMainWindow):
             "The application was created by your friendly neighborhood programmer.",
         )
 
-    def solve(self):
-        """Solves the maze."""
-        self.path.append(Point(*self.start))
-        self.maze.set_value(*self.start, 2)
-        self.print_maze()
-        self.colors[self.start] = COLOR_MAP["start"]
-        self.update_board()  # Update the board after setting the start point
+    def update_gui(self):
+        """Updates the GUI."""
+        self.update_board()
         QApplication.processEvents()
 
-        while True:
-            try:
-                current_point = self.path[-1]
-            except IndexError:
-                self.end_solve("No solution found")
-                break
+    def solve(self):
+        """Solves the maze."""
+        self.maze_solver = MazeSolverLogic(self.maze, self.start, self.end, self.update_gui)
+        self.maze_solver.solve()
 
-            if current_point.pos == self.end:
-                self.highlight_path()  # Highlight the path after the maze is solved
-                self.end_solve("Maze solved successfully")
-                break
-
-            try:
-                direction = current_point.get_dir(self.maze)
-            except IndexError:
-                self.end_solve("Invalid maze configuration")
-                break
-
-            if direction:
-                current_point = Point(*current_point.get_coord(direction), direction)
-                self.maze.set_value(*current_point.pos, 2)
-                self.print_maze()
-                self.update_board()  # Update the board after each step
-                QApplication.processEvents()
-                self.path.append(current_point)
-            else:
-                self.path.pop()
-                self.maze.set_value(*current_point.pos, 3)
-                self.print_maze()
-                self.update_board()  # Update the board after backtracking
-                QApplication.processEvents()
+        if self.maze_solver.is_solved:
+            self.highlight_path()
+            self.end_solve("Maze solved successfully")
+        else:
+            self.end_solve("No solution found")
 
     def highlight_path(self):
         """Highlights the shortest path in red."""
-        for point in self.path:
+        for point in self.maze_solver.path:
             self.handle_click(point.pos[1] * 20, point.pos[0] * 20, QColor(255, 0, 0))
         self.update_board()
         QApplication.processEvents()
@@ -309,9 +287,10 @@ class MazeSolver(QMainWindow):
         QApplication.beep()
 
 
+
 def main():
     app = QApplication([])
-    solver = MazeSolver(IMG_PATH, GRID_SIZE, SLEEP_TIME, APP_TITLE)
+    solver = MazeSolverGUI(IMG_PATH, GRID_SIZE, SLEEP_TIME, APP_TITLE)
     solver.show()
     app.exec_()
 
