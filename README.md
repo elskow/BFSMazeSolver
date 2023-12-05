@@ -25,8 +25,6 @@ A simple maze solver using BFS algorithm with GUI on Python. Made for the course
 ---
 
 ## Screenshots
-<div style="display: flex; flex-direction: row; justify-content: space-between;">
-    <img src="docs/1.png" width="30%">
-    <img src="docs/2.png" width="30%">
-    <img src="docs/3.png" width="30%">
-</div>
+<img src="docs/1.png">
+<img src="docs/2.png">
+<img src="docs/3.png">
