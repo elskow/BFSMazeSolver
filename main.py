@@ -4,7 +4,7 @@ import os
 
 # Constants
 IMG_PATH = os.path.join(os.path.dirname(__file__), "example/maze0.jpg")
-SLEEP_TIME = 10
+SLEEP_TIME = None
 GRID_SIZE = (33, 15)
 APP_TITLE = "Maze Solver"
 

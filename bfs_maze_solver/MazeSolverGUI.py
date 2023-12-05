@@ -52,56 +52,9 @@ class MazeSolverGUI(QMainWindow):
             "QToolTip {background-color: #3b3b3b; color: white; border: 1px solid white;}"
         )
 
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-        self.layout.setContentsMargins(10, 10, 10, 10)
-        self.layout.setSpacing(10)
-
-        font = QFont("Inter", 10)
-        self.setFont(font)
-
-        # Create a menu bar
-        self.menuBar = QMenuBar(self)
-        self.setMenuBar(self.menuBar)
-
-        # Create a File menu
-        self.fileMenu = QMenu("File", self)
-        self.menuBar.addMenu(self.fileMenu)
-
-        # Add actions to the File menu
-        self.openImageAction = QAction("Open Image", self)
-        self.fileMenu.addAction(self.openImageAction)
-        self.openImageAction.triggered.connect(self.open_image)
-
-        self.exitAction = QAction("Exit", self)
-        self.fileMenu.addAction(self.exitAction)
-        self.exitAction.triggered.connect(self.close)
-
-        # Create an Actions menu
-        self.actionsMenu = QMenu("Actions", self)
-        self.menuBar.addMenu(self.actionsMenu)
-
-        # Add actions to the Actions menu
-        self.resetAction = QAction("Reset", self)
-        self.actionsMenu.addAction(self.resetAction)
-        self.resetAction.triggered.connect(self.reset_maze)
-
-        # Add a Help menu
-        self.helpMenu = QMenu("Help", self)
-        self.menuBar.addMenu(self.helpMenu)
-        self.aboutAction = QAction("About", self)
-        self.helpMenu.addAction(self.aboutAction)
-        self.aboutAction.triggered.connect(self.about)
-
-        # Add tooltips to the menu items
-        self.openImageAction.setToolTip("Open an image file of a maze")
-        self.exitAction.setToolTip("Exit the application")
-        self.resetAction.setToolTip("Reset the maze to its original state")
-        self.aboutAction.setToolTip("Show information about the application")
-
-        # Create a status bar
-        self.statusBar = QStatusBar(self)
-        self.setStatusBar(self.statusBar)
+        self.init_layout()
+        self.init_menu_bar()
+        self.init_status_bar()
 
         self.grid_size = grid_size
         self.sleep_time = sleep_time
@@ -125,6 +78,52 @@ class MazeSolverGUI(QMainWindow):
             (*self.maze.maze.shape, 3), self.color_map["path"], dtype=np.uint8
         )
         self.print_maze()
+
+    def init_layout(self):
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self.layout.setContentsMargins(10, 10, 10, 10)
+        self.layout.setSpacing(10)
+
+        font = QFont("Inter", 10)
+        self.setFont(font)
+
+    def init_menu_bar(self):
+        self.menuBar = QMenuBar(self)
+        self.setMenuBar(self.menuBar)
+
+        self.fileMenu = QMenu("File", self)
+        self.menuBar.addMenu(self.fileMenu)
+
+        self.openImageAction = QAction("Open Image", self)
+        self.fileMenu.addAction(self.openImageAction)
+        self.openImageAction.triggered.connect(self.open_image)
+
+        self.exitAction = QAction("Exit", self)
+        self.fileMenu.addAction(self.exitAction)
+        self.exitAction.triggered.connect(self.close)
+
+        self.actionsMenu = QMenu("Actions", self)
+        self.menuBar.addMenu(self.actionsMenu)
+
+        self.resetAction = QAction("Reset", self)
+        self.actionsMenu.addAction(self.resetAction)
+        self.resetAction.triggered.connect(self.reset_maze)
+
+        self.helpMenu = QMenu("Help", self)
+        self.menuBar.addMenu(self.helpMenu)
+        self.aboutAction = QAction("About", self)
+        self.helpMenu.addAction(self.aboutAction)
+        self.aboutAction.triggered.connect(self.about)
+
+        self.openImageAction.setToolTip("Open an image file of a maze")
+        self.exitAction.setToolTip("Exit the application")
+        self.resetAction.setToolTip("Reset the maze to its original state")
+        self.aboutAction.setToolTip("Show information about the application")
+
+    def init_status_bar(self):
+        self.statusBar = QStatusBar(self)
+        self.setStatusBar(self.statusBar)
 
     def print_maze(self):
         """Prints the maze to the console and updates the board."""
@@ -248,7 +247,7 @@ class MazeSolverGUI(QMainWindow):
     def solve(self):
         """Solves the maze."""
         self.maze_solver = MazeSolverLogic(
-            self.maze, self.start, self.end, self.update_gui
+            self.maze, self.start, self.end, self.update_gui, self.sleep_time
         )
         self.maze_solver.solve()
 

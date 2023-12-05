@@ -1,11 +1,12 @@
 from .MazePoint import MazePoint
 from collections import deque
+import time
 
 
 class MazeSolverLogic:
     """Finds a solution to the maze. Uses a breadth-first search algorithm."""
 
-    def __init__(self, maze, start, end, update_gui):
+    def __init__(self, maze, start, end, update_gui, sleep_time=None):
         self.maze = maze
         self.start = start
         self.end = end
@@ -13,6 +14,7 @@ class MazeSolverLogic:
         self.is_solved = False
         self.update_gui = update_gui
         self.the_shortest_path = []
+        self.sleep_time = sleep_time
 
     def solve(self):
         """Solves the maze."""
@@ -34,7 +36,8 @@ class MazeSolverLogic:
                     self.maze.set_value(*next_point.pos, 3)
                     self.path.append(next_point)
                     predecessor[next_point.pos] = current_point
-
+            if self.sleep_time:
+                time.sleep(self.sleep_time)
             self.update_gui()
 
         # Backtrack to find the shortest path
