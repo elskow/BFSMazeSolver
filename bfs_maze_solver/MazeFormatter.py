@@ -1,5 +1,5 @@
-import cv2
 import os
+import cv2
 import numpy as np
 
 IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
@@ -8,13 +8,14 @@ M = 15
 
 
 class MazeFormatter:
-    def __init__(self, img_path, N=33, m=15):
+    def __init__(self, img_path, n=33, m=15):
         self.img_path = img_path
         self.img = self.load_and_format_image(img_path)
-        self.N = N
+        self.N = n
         self.m = m
 
-    def load_and_format_image(self, img_path):
+    @staticmethod
+    def load_and_format_image(img_path):
         img = cv2.imread(img_path, 0)
         img = cv2.resize(img, (495, 495))
         _, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -52,13 +53,14 @@ class MazeFormatter:
     def calculate_cell_value(self, i, j):
         val = int(
             self.img[
-                i * self.m : (i + 1) * self.m, j * self.m : (j + 1) * self.m
+                i * self.m: (i + 1) * self.m, j * self.m: (j + 1) * self.m
             ].mean()
         )
         cell = 1 if val > 127 else 0
         return val, cell
 
-    def update_cell_counts(self, cell, white_cells, black_cells):
+    @staticmethod
+    def update_cell_counts(cell, white_cells, black_cells):
         if cell == 1:
             white_cells += 1
         else:
@@ -68,12 +70,13 @@ class MazeFormatter:
     def calculate_larger_area_value(self, i, j):
         return int(
             self.img[
-                max(0, (i - 1) * self.m) : min((i + 2) * self.m, self.img.shape[0]),
-                max(0, (j - 1) * self.m) : min((j + 2) * self.m, self.img.shape[1]),
+                max(0, (i - 1) * self.m): min((i + 2) * self.m, self.img.shape[0]),
+                max(0, (j - 1) * self.m): min((j + 2) * self.m, self.img.shape[1]),
             ].mean()
         )
 
-    def update_wall_counts(self, larger_area_val, thick_walls, thin_walls):
+    @staticmethod
+    def update_wall_counts(larger_area_val, thick_walls, thin_walls):
         if larger_area_val < 127:
             thick_walls += 1
         else:
@@ -87,7 +90,8 @@ class MazeFormatter:
             maze = self.swap_colors(maze)
         return maze
 
-    def swap_colors(self, maze):
+    @staticmethod
+    def swap_colors(maze):
         return maze.replace("0", "2").replace("1", "0").replace("2", "1")
 
     def show(self):
@@ -104,13 +108,15 @@ class MazeFormatter:
             ]
         )
 
-    def resize_maze(self, maze):
+    @staticmethod
+    def resize_maze(maze):
         maze_resized = np.repeat(maze, 15, axis=0)
         maze_resized = np.repeat(maze_resized, 15, axis=1)
         maze_resized = maze_resized.astype(np.uint8) * 255  # 0 is black, 255 is white
         return 255 - maze_resized
 
-    def display_maze(self, maze_resized):
+    @staticmethod
+    def display_maze(maze_resized):
         cv2.imshow("Maze Preview", maze_resized)
         cv2.waitKey(0)
         cv2.destroyAllWindows()

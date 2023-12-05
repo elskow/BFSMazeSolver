@@ -11,26 +11,12 @@ from PyQt5.QtWidgets import (
     QFileDialog,
 )
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor, QFont
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt
 import numpy as np
-import os
 
 from Maze import Maze
 from MazeFormatter import MazeFormatter
 from MazeSolverLogic import MazeSolverLogic
-
-
-# Constants
-IMG_PATH = os.path.join(os.path.dirname(__file__), "../example/maze0.jpg")
-SLEEP_TIME = 10
-GRID_SIZE = (33, 15)
-COLOR_MAP = {
-    "path": (255, 255, 255),  # white
-    "wall": (0, 0, 0),  # black
-    "start": (255, 0, 0),  # red
-    "end": (50, 50, 50),  # dark grey
-}
-APP_TITLE = "Maze Solver"
 
 
 class MazeSolverGUI(QMainWindow):
@@ -38,6 +24,14 @@ class MazeSolverGUI(QMainWindow):
 
     def __init__(self, img_path, grid_size, sleep_time, title="Maze Solver"):
         super().__init__()
+        self.maze_solver = None
+        self.color_map = {
+            "path": (255, 255, 255),  # white
+            "wall": (0, 0, 0),  # black
+            "start": (255, 0, 0),  # red
+            "end": (50, 50, 50),  # dark grey
+        }
+
         self.setWindowTitle(title)
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.StrongFocus)
@@ -88,11 +82,6 @@ class MazeSolverGUI(QMainWindow):
         self.resetAction = QAction("Reset", self)
         self.actionsMenu.addAction(self.resetAction)
         self.resetAction.triggered.connect(self.reset_maze)
-
-        #
-        self.solveAction = QAction("Solve", self)
-        self.actionsMenu.addAction(self.solveAction)
-        self.solveAction.triggered.connect(self.solve)
         
         # Add a Help menu
         self.helpMenu = QMenu("Help", self)
@@ -105,7 +94,6 @@ class MazeSolverGUI(QMainWindow):
         self.openImageAction.setToolTip("Open an image file of a maze")
         self.exitAction.setToolTip("Exit the application")
         self.resetAction.setToolTip("Reset the maze to its original state")
-        self.solveAction.setToolTip("Solve the maze")
         self.aboutAction.setToolTip("Show information about the application")
 
         # Create a status bar
@@ -115,6 +103,7 @@ class MazeSolverGUI(QMainWindow):
         self.grid_size = grid_size
         self.sleep_time = sleep_time
 
+        self.default_img_path = img_path
         self.maze_str = MazeFormatter(img_path, *grid_size).convert()
         self.maze = Maze(self.maze_str)
 
@@ -130,7 +119,7 @@ class MazeSolverGUI(QMainWindow):
         self.setCentralWidget(self.label)
         
         self.colors = np.full(
-            (*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8
+            (*self.maze.maze.shape, 3), self.color_map["path"], dtype=np.uint8
         )
         self.print_maze()
 
@@ -143,12 +132,12 @@ class MazeSolverGUI(QMainWindow):
     def update_board(self):
         """Updates the board with the current state of the maze."""
         color_map = {
-            0: COLOR_MAP["path"],
-            1: COLOR_MAP["wall"],
-            2: COLOR_MAP["start"],
-            3: COLOR_MAP["end"],
+            0: self.color_map["path"],
+            1: self.color_map["wall"],
+            2: self.color_map["start"],
+            3: self.color_map["end"],
         }
-        colors = np.full((*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8)
+        colors = np.full((*self.maze.maze.shape, 3), self.color_map["path"], dtype=np.uint8)
         for key, value in color_map.items():
             colors[self.maze.maze == key] = value
 
@@ -210,7 +199,7 @@ class MazeSolverGUI(QMainWindow):
     
     def reset_maze(self):
         """Resets the maze to its original state."""
-        self.maze_str = MazeFormatter(IMG_PATH, *GRID_SIZE).convert()
+        self.maze_str = MazeFormatter(self.default_img_path, *self.grid_size).convert()
         self.maze = Maze(self.maze_str)
         self.board, self.start, self.end, self.path, self.clicks = (
             None,
@@ -220,7 +209,7 @@ class MazeSolverGUI(QMainWindow):
             0,
         )
         self.colors = np.full(
-            (*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8
+            (*self.maze.maze.shape, 3), self.color_map["path"], dtype=np.uint8
         )
         self.print_maze()
 
@@ -230,19 +219,8 @@ class MazeSolverGUI(QMainWindow):
             self, "Open Image", "", "Images (*.png *.xpm *.jpg)"
         )
         if img_path:
-            self.maze_str = MazeFormatter(img_path, *self.grid_size).convert()
-            self.maze = Maze(self.maze_str)
-            self.board, self.start, self.end, self.path, self.clicks = (
-                None,
-                None,
-                None,
-                [],
-                0,
-            )
-            self.colors = np.full(
-                (*self.maze.maze.shape, 3), COLOR_MAP["path"], dtype=np.uint8
-            )
-            self.print_maze()
+            self.default_img_path = img_path
+            self.reset_maze()
             QApplication.processEvents()
 
     def about(self):
@@ -285,15 +263,4 @@ class MazeSolverGUI(QMainWindow):
         self.statusBar.showMessage(message)
         QApplication.processEvents()
         QApplication.beep()
-
-
-
-def main():
-    app = QApplication([])
-    solver = MazeSolverGUI(IMG_PATH, GRID_SIZE, SLEEP_TIME, APP_TITLE)
-    solver.show()
-    app.exec_()
-
-
-if __name__ == "__main__":
-    main()
+        

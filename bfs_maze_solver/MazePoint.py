@@ -1,4 +1,4 @@
-class Point:
+class MazePoint:
     """Represents a point in the maze."""
 
     def __init__(self, x, y, d=None, directions=None):

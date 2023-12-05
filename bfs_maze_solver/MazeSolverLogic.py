@@ -1,4 +1,4 @@
-from MazePoint import Point
+from MazePoint import MazePoint as Point
 
 
 class MazeSolverLogic:
